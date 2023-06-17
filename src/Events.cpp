@@ -15,17 +15,15 @@ namespace Events {
         if (const auto player = RE::PlayerCharacter::GetSingleton();
             player->Is3DLoaded() && !player->IsSneaking()) {
             if (const auto& obj = a_event->objectActivated; obj->IsCrimeToActivate()) {
-                if (obj->GetName() == "Door" || obj->GetName() == "Large Wooden Gate") return RE::BSEventNotifyControl::kContinue;
+                if (obj->GetName() == "Door" || obj->GetName() == "Large Wooden Gate") 
+                    return RE::BSEventNotifyControl::kContinue;
 
-                logger::info("Attempting to steal {}", obj->GetName());
-
-                const auto base_obj = obj->GetObjectReference();
-
-                if (const auto found = Utility::objects.find(base_obj); found != Utility::objects.end()) {
+                const auto obj_ref = obj->GetObjectReference();
+                if (const auto found = Utility::objects.find(obj_ref); found != Utility::objects.end()) {
                     Utility::objects.erase(found);
                     obj->SetActivationBlocked(false);
                 } else {
-                    Utility::objects.insert(base_obj);
+                    Utility::objects.insert(obj_ref);
                     obj->SetActivationBlocked(true);
                 }
             }
