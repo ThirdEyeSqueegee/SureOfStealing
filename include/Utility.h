@@ -16,5 +16,5 @@ public:
         return std::addressof(singleton);
     }
 
-    inline static std::set<RE::TESBoundObject*> objects;
+    inline static RE::NiPointer<RE::TESObjectREFR> last_activation = nullptr;
 };
