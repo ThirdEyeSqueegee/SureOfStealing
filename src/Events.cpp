@@ -15,13 +15,19 @@ namespace Events {
         if (const auto player = RE::PlayerCharacter::GetSingleton();
             player->Is3DLoaded() && !player->IsSneaking()) {
             if (const auto& obj = a_event->objectActivated; obj->IsCrimeToActivate()) {
-                if (!"Door"sv.compare(obj->GetName()) || !"Large Wooden Gate"sv.compare(obj->GetName()))
+                if (!"Coin Purse"sv.compare(obj->GetName()) 
+                    || !"Door"sv.compare(obj->GetName()) 
+                    || !"Large Wooden Gate"sv.compare(obj->GetName()))
                     return RE::BSEventNotifyControl::kContinue;
 
                 if (obj == Utility::last_activation) {
                     obj->SetActivationBlocked(false);
                     Utility::last_activation = nullptr;
                 } else {
+                    if (Utility::last_activation) {
+                        Utility::last_activation->SetActivationBlocked(false);
+                        Utility::last_activation = nullptr;
+                    }
                     obj->SetActivationBlocked(true);
                     Utility::last_activation = obj;
                 }
