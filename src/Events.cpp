@@ -1,4 +1,6 @@
 #include "Events.h"
+
+#include "Settings.h"
 #include "Utility.h"
 
 namespace Events {
@@ -14,9 +16,10 @@ namespace Events {
 
         if (const auto player = RE::PlayerCharacter::GetSingleton();
             player->Is3DLoaded() && !player->IsSneaking()) {
-            if (const auto& obj = a_event->objectActivated; obj->IsCrimeToActivate()) {
-                if (!"Coin Purse"sv.compare(obj->GetName()) 
-                    || !"Door"sv.compare(obj->GetName()) 
+            if (const auto& obj = a_event->objectActivated; obj->IsCrimeToActivate() ||
+                ((!"Bench"sv.compare(obj->GetName()) || !"Chair"sv.compare(obj->GetName())) && Settings::sitting_flag)) {
+                if (!"Coin Purse"sv.compare(obj->GetName())
+                    || !"Door"sv.compare(obj->GetName())
                     || !"Large Wooden Gate"sv.compare(obj->GetName()))
                     return RE::BSEventNotifyControl::kContinue;
 
