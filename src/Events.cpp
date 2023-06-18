@@ -23,6 +23,9 @@ namespace Events {
                     || !"Large Wooden Gate"sv.compare(obj->GetName()))
                     return RE::BSEventNotifyControl::kContinue;
 
+                if (const auto book = obj->GetObjectReference()->As<RE::TESObjectBOOK>(); !book->IsRead())
+                    return RE::BSEventNotifyControl::kContinue;
+
                 if (obj == Utility::last_activation) {
                     obj->SetActivationBlocked(false);
                     Utility::last_activation = nullptr;
