@@ -16,31 +16,37 @@ namespace Events {
 
         if (const auto player = RE::PlayerCharacter::GetSingleton();
             player->Is3DLoaded() && !player->IsSneaking()) {
-            if (const auto& obj = a_event->objectActivated; obj->IsCrimeToActivate()
-                                                            || ((!"Bench"sv.compare(obj->GetName())
-                                                                 || !"Chair"sv.compare(obj->GetName()))
-                                                                && Settings::sitting_flag)) {
-                if (!"Coin Purse"sv.compare(obj->GetName())
-                    || !"Door"sv.compare(obj->GetName())
-                    || !"Large Wooden Gate"sv.compare(obj->GetName()))
-                    return RE::BSEventNotifyControl::kContinue;
+            if (const auto& obj = a_event->objectActivated) {
+                if (obj->IsCrimeToActivate() || ((!"Bench"sv.compare(obj->GetName())
+                                                  || !"Chair"sv.compare(obj->GetName())) && Settings::sitting_flag)
+                    || (obj->GetBaseObject()->GetFormType() == RE::FormType::Container
+                        && !std::string_view(obj->GetName()).contains("Merchant")
+                        && Settings::container_flag)) {
+                    if (!"Coin Purse"sv.compare(obj->GetName())
+                        || !"Door"sv.compare(obj->GetName())
+                        || !"Large Wooden Gate"sv.compare(obj->GetName()))
+                        return RE::BSEventNotifyControl::kContinue;
 
-                if (a_event->actionRef->IsPlayerRef()) {
-                    if (obj->GetBaseObject()->IsBook()) {
-                        if (const auto book = obj->GetBaseObject()->As<RE::TESObjectBOOK>(); !book->IsRead())
-                            return RE::BSEventNotifyControl::kContinue;
-                    }
-
-                    if (obj == Utility::last_activation) {
-                        obj->SetActivationBlocked(false);
-                        Utility::last_activation = nullptr;
-                    } else {
-                        if (Utility::last_activation) {
-                            Utility::last_activation->SetActivationBlocked(false);
-                            Utility::last_activation = nullptr;
+                    if (a_event->actionRef->IsPlayerRef()) {
+                        if (obj->GetBaseObject()->IsBook()) {
+                            if (const auto book = obj->GetBaseObject()->As<RE::TESObjectBOOK>(); !book->IsRead())
+                                return RE::BSEventNotifyControl::kContinue;
                         }
-                        obj->SetActivationBlocked(true);
-                        Utility::last_activation = obj;
+
+                        if (obj->GetBaseObject()->GetFormType() == RE::FormType::Container && obj->GetInventoryCount())
+                            return RE::BSEventNotifyControl::kContinue;
+
+                        if (obj == Utility::last_activation) {
+                            obj->SetActivationBlocked(false);
+                            Utility::last_activation = nullptr;
+                        } else {
+                            if (Utility::last_activation) {
+                                Utility::last_activation->SetActivationBlocked(false);
+                                Utility::last_activation = nullptr;
+                            }
+                            obj->SetActivationBlocked(true);
+                            Utility::last_activation = obj;
+                        }
                     }
                 }
             }

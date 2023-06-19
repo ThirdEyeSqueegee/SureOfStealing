@@ -15,4 +15,5 @@ public:
     static void LoadSettings();
 
     inline static bool sitting_flag = false;
+    inline static bool container_flag = false;
 };
