@@ -33,7 +33,7 @@ namespace Events {
                                 return RE::BSEventNotifyControl::kContinue;
                         }
 
-                        if (obj->GetFormType() == RE::FormType::Container && obj->GetInventoryCount())
+                        if (obj->GetBaseObject()->GetFormType() == RE::FormType::Container && obj->GetInventoryCount())
                             return RE::BSEventNotifyControl::kContinue;
 
                         if (obj == Utility::last_activation) {
