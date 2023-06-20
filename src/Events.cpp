@@ -19,7 +19,7 @@ namespace Events {
             if (const auto& obj = a_event->objectActivated) {
                 if (obj->IsCrimeToActivate() || ((!"Bench"sv.compare(obj->GetName())
                                                   || !"Chair"sv.compare(obj->GetName())) && Settings::sitting_flag)
-                    || (obj->GetBaseObject()->GetFormType() == RE::FormType::Container
+                    || (obj->GetFormType() == RE::FormType::Container
                         && !std::string_view(obj->GetName()).contains("Merchant")
                         && Settings::container_flag)) {
                     if (!"Coin Purse"sv.compare(obj->GetName())
@@ -33,7 +33,7 @@ namespace Events {
                                 return RE::BSEventNotifyControl::kContinue;
                         }
 
-                        if (obj->GetBaseObject()->GetFormType() == RE::FormType::Container && obj->GetInventoryCount())
+                        if (obj->GetFormType() == RE::FormType::Container && obj->GetInventoryCount())
                             return RE::BSEventNotifyControl::kContinue;
 
                         if (obj == Utility::last_activation) {
