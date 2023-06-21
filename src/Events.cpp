@@ -33,8 +33,12 @@ namespace Events {
                                 return RE::BSEventNotifyControl::kContinue;
                         }
 
-                        if (obj->GetBaseObject()->GetFormType() == RE::FormType::Container && obj->GetInventoryCount())
-                            return RE::BSEventNotifyControl::kContinue;
+                        if (obj->GetFormType() == RE::FormType::Container) {
+                            if (const auto inv = obj->GetInventory([](const RE::TESBoundObject& item) {
+                                return true;
+                            }); !inv.empty())
+                                return RE::BSEventNotifyControl::kContinue;
+                        }
 
                         if (obj == Utility::last_activation) {
                             obj->SetActivationBlocked(false);
