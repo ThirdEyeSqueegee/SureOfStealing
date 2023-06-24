@@ -54,6 +54,9 @@ namespace Events {
                     }
                 }
             }
+        } else if (player->IsSneaking() && Utility::last_activation) {
+            Utility::last_activation->SetActivationBlocked(false);
+            Utility::last_activation = nullptr;
         }
 
         return RE::BSEventNotifyControl::kContinue;
