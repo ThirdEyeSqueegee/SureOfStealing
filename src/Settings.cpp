@@ -14,8 +14,10 @@ void Settings::LoadSettings() {
     ini.SetUnicode();
     ini.LoadFile(R"(.\Data\SKSE\Plugins\SureOfStealing.ini)");
 
-    sitting_flag = static_cast<bool>(std::atoi(ini.GetValue("General", "bSittingFlag")));
-    container_flag = static_cast<bool>(std::atoi(ini.GetValue("General", "bContainerFlag")));
+    chairs_and_benches_flag = ini.GetValue("General", "bChairsAndBenches");
+    empty_containers_flag = ini.GetValue("General", "bEmptyContainers");
 
     logger::info("Loaded settings");
+    logger::info("    Chairs and benches: {}", chairs_and_benches_flag);
+    logger::info("    Empty containers: {}", empty_containers_flag);
 }

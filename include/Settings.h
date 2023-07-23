@@ -14,6 +14,6 @@ public:
     static Settings* GetSingleton();
     static void LoadSettings();
 
-    inline static bool sitting_flag = false;
-    inline static bool container_flag = false;
+    inline static bool chairs_and_benches_flag = false;
+    inline static bool empty_containers_flag = false;
 };
