@@ -23,7 +23,7 @@ namespace Events {
                     || !"Large Wooden Gate"sv.compare(obj->GetName()))
                     return RE::BSEventNotifyControl::kContinue;
 
-                if (obj->IsCrimeToActivate()
+                if ((obj->IsCrimeToActivate() && obj->GetFormType() != RE::FormType::Container)
                     || (Settings::chairs_and_benches_flag
                         && (!"Chair"sv.compare(obj->GetName()) || !"Bench"sv.compare(obj->GetName())))
                     || (Settings::empty_containers_flag
@@ -73,6 +73,9 @@ namespace Events {
 
         if (!Utility::immersive_interactions_present) return RE::BSEventNotifyControl::kContinue;
 
+        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson())
+            return RE::BSEventNotifyControl::kContinue;
+
         for (auto e = *a_event; e != nullptr; e = e->next) {
             if (const auto button_event = e->AsButtonEvent()) {
                 const auto control_map = RE::ControlMap::GetSingleton();
@@ -113,6 +116,9 @@ namespace Events {
         if (!a_event) return RE::BSEventNotifyControl::kContinue;
 
         if (!Utility::immersive_interactions_present) return RE::BSEventNotifyControl::kContinue;
+
+        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson())
+            return RE::BSEventNotifyControl::kContinue;
 
         if (const auto& ref = a_event->crosshairRef)
             Utility::crosshair_ref = ref;
