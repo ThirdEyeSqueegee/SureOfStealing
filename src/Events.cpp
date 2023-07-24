@@ -15,19 +15,19 @@ namespace Events {
 
         if (!a_event->actionRef->IsPlayerRef()) return RE::BSEventNotifyControl::kContinue;
 
-        if (const auto player = RE::PlayerCharacter::GetSingleton();
+        if (const auto player = RE::PlayerCharacter::GetSingleton(); 
             player->Is3DLoaded() && !player->IsSneaking()) {
             if (const auto& obj = a_event->objectActivated) {
-                if (!"Coin Purse"sv.compare(obj->GetName())
-                    || !"Door"sv.compare(obj->GetName())
+                if (!"Coin Purse"sv.compare(obj->GetName()) 
+                    || !"Door"sv.compare(obj->GetName()) 
                     || !"Large Wooden Gate"sv.compare(obj->GetName()))
                     return RE::BSEventNotifyControl::kContinue;
 
                 if ((obj->IsCrimeToActivate() && obj->GetFormType() != RE::FormType::Container)
-                    || (Settings::chairs_and_benches_flag
+                    || (Settings::chairs_and_benches_flag 
                         && (!"Chair"sv.compare(obj->GetName()) || !"Bench"sv.compare(obj->GetName())))
                     || (Settings::empty_containers_flag
-                        && obj->GetFormType() == RE::FormType::Container
+                        && obj->GetFormType() == RE::FormType::Container 
                         && obj->GetInventoryCount(true) == 0
                         && !std::string_view(obj->GetName()).contains("Merchant"sv))) {
                     // Skip unread books
@@ -73,22 +73,24 @@ namespace Events {
 
         if (!Utility::immersive_interactions_present) return RE::BSEventNotifyControl::kContinue;
 
-        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson())
+        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson()) 
             return RE::BSEventNotifyControl::kContinue;
 
-        for (auto e = *a_event; e != nullptr; e = e->next) {
-            if (const auto button_event = e->AsButtonEvent()) {
-                const auto control_map = RE::ControlMap::GetSingleton();
-                const auto activate_key = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kKeyboard);
-                const auto activate_key_controller = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kGamepad);
-                if (button_event->GetIDCode() == activate_key || button_event->GetIDCode() == activate_key_controller) {
-                    if (button_event->IsPressed()) {
-                        if (Utility::crosshair_ref) {
-                            if (Utility::crosshair_ref->IsCrimeToActivate()) {
-                                if (Utility::last_activation == Utility::crosshair_ref) {
-                                    Utility::immersive_interactions_global->value = 1.0f;
-                                } else {
-                                    Utility::immersive_interactions_global->value = 0.0f;
+        if (const auto player = RE::PlayerCharacter::GetSingleton()) {
+            for (auto e = *a_event; e != nullptr; e = e->next) {
+                if (const auto button_event = e->AsButtonEvent()) {
+                    const auto control_map = RE::ControlMap::GetSingleton();
+                    const auto activate_key = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kKeyboard);
+                    const auto activate_key_controller = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kGamepad);
+                    if (button_event->GetIDCode() == activate_key || button_event->GetIDCode() == activate_key_controller) {
+                        if (button_event->IsPressed()) {
+                            if (Utility::crosshair_ref) {
+                                if (Utility::crosshair_ref->IsCrimeToActivate() && !player->IsSneaking()) {
+                                    if (Utility::last_activation == Utility::crosshair_ref) {
+                                        Utility::immersive_interactions_global->value = 1.0f;
+                                    } else {
+                                        Utility::immersive_interactions_global->value = 0.0f;
+                                    }
                                 }
                             }
                         }
@@ -117,7 +119,7 @@ namespace Events {
 
         if (!Utility::immersive_interactions_present) return RE::BSEventNotifyControl::kContinue;
 
-        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson())
+        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson()) 
             return RE::BSEventNotifyControl::kContinue;
 
         if (const auto& ref = a_event->crosshairRef)
