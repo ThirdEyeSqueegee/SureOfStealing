@@ -1,4 +1,5 @@
 #include "Settings.h"
+
 #include "SimpleIni.h"
 
 Settings* Settings::GetSingleton() {
@@ -14,10 +15,17 @@ void Settings::LoadSettings() {
     ini.SetUnicode();
     ini.LoadFile(R"(.\Data\SKSE\Plugins\SureOfStealing.ini)");
 
-    chairs_and_benches_flag = ini.GetValue("General", "bChairsAndBenches");
-    empty_containers_flag = ini.GetValue("General", "bEmptyContainers");
+    debug_logging = ini.GetBoolValue("Log", "Debug");
+
+    if (debug_logging) {
+        spdlog::get("Global")->set_level(spdlog::level::level_enum::debug);
+        logger::debug("Debug logging enabled");
+    }
+
+    chairs_and_benches = ini.GetBoolValue("General", "bChairsAndBenches");
+    empty_containers = ini.GetBoolValue("General", "bEmptyContainers");
 
     logger::info("Loaded settings");
-    logger::info("    Chairs and benches: {}", chairs_and_benches_flag);
-    logger::info("    Empty containers: {}", empty_containers_flag);
+    logger::info("\tbChairsAndBenches = {}", chairs_and_benches);
+    logger::info("\tbEmptyContainers = {}", empty_containers);
 }

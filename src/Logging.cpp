@@ -2,7 +2,8 @@
 
 void InitializeLogging() {
     auto path = SKSE::log::log_directory();
-    if (!path) SKSE::stl::report_and_fail("Unable to lookup SKSE logs directory.");
+    if (!path)
+        SKSE::stl::report_and_fail("Unable to lookup SKSE logs directory.");
     *path /= SKSE::PluginDeclaration::GetSingleton()->GetName();
     *path += L".log";
 
@@ -15,5 +16,5 @@ void InitializeLogging() {
     log->flush_on(spdlog::level::level_enum::trace);
 
     set_default_logger(std::move(log));
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [%t] [%s:%#] %v");
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [%t] [%s:%#] %v");
 }

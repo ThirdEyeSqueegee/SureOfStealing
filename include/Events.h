@@ -13,8 +13,7 @@ namespace Events {
 
         static OnActivateEventHandler* GetSingleton();
 
-        RE::BSEventNotifyControl ProcessEvent(const RE::TESActivateEvent* a_event,
-                                              RE::BSTEventSource<RE::TESActivateEvent>* a_eventSource) override;
+        RE::BSEventNotifyControl ProcessEvent(const RE::TESActivateEvent* a_event, RE::BSTEventSource<RE::TESActivateEvent>* a_eventSource) override;
 
         static void Register();
     };
@@ -48,7 +47,8 @@ namespace Events {
 
         static CrosshairEventHandler* GetSingleton();
 
-        RE::BSEventNotifyControl ProcessEvent(const SKSE::CrosshairRefEvent* a_event, RE::BSTEventSource<SKSE::CrosshairRefEvent>* a_eventSource) override;
+        RE::BSEventNotifyControl ProcessEvent(const SKSE::CrosshairRefEvent* a_event,
+                                              RE::BSTEventSource<SKSE::CrosshairRefEvent>* a_eventSource) override;
 
         static void Register();
     };

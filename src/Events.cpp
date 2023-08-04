@@ -11,48 +11,53 @@ namespace Events {
 
     RE::BSEventNotifyControl OnActivateEventHandler::ProcessEvent(const RE::TESActivateEvent* a_event,
                                                                   RE::BSTEventSource<RE::TESActivateEvent>* a_eventSource) {
-        if (!a_event) return RE::BSEventNotifyControl::kContinue;
+        if (!a_event)
+            return RE::BSEventNotifyControl::kContinue;
 
-        if (!a_event->actionRef->IsPlayerRef()) return RE::BSEventNotifyControl::kContinue;
+        if (!a_event->actionRef->IsPlayerRef())
+            return RE::BSEventNotifyControl::kContinue;
 
-        if (const auto player = RE::PlayerCharacter::GetSingleton(); 
-            player->Is3DLoaded() && !player->IsSneaking()) {
+        if (const auto player = RE::PlayerCharacter::GetSingleton(); player->Is3DLoaded() && !player->IsSneaking()) {
             if (const auto& obj = a_event->objectActivated) {
-                if (!"Coin Purse"sv.compare(obj->GetName()) 
-                    || !"Door"sv.compare(obj->GetName()) 
-                    || !"Large Wooden Gate"sv.compare(obj->GetName()))
+                logger::debug("Found object {}", obj->GetName());
+
+                if (!"Coin Purse"sv.compare(obj->GetName()) || !"Door"sv.compare(obj->GetName()) || !"Large Wooden Gate"sv.compare(obj->GetName()))
                     return RE::BSEventNotifyControl::kContinue;
 
                 if ((obj->IsCrimeToActivate() && obj->GetFormType() != RE::FormType::Container)
-                    || (Settings::chairs_and_benches_flag 
-                        && (!"Chair"sv.compare(obj->GetName()) || !"Bench"sv.compare(obj->GetName())))
-                    || (Settings::empty_containers_flag
-                        && obj->GetFormType() == RE::FormType::Container 
-                        && obj->GetInventoryCount(true) == 0
+                    || (Settings::chairs_and_benches && (!"Chair"sv.compare(obj->GetName()) || !"Bench"sv.compare(obj->GetName())))
+                    || (Settings::empty_containers && obj->GetFormType() == RE::FormType::Container && !obj->GetInventoryCount()
                         && !std::string_view(obj->GetName()).contains("Merchant"sv))) {
+                    logger::debug("Passed check");
                     // Skip unread books
                     if (obj->GetBaseObject()->IsBook()) {
                         if (const auto book = obj->GetBaseObject()->As<RE::TESObjectBOOK>(); !book->IsRead())
                             return RE::BSEventNotifyControl::kContinue;
                     }
-
                     if (obj == Utility::last_activation) {
                         obj->SetActivationBlocked(false);
                         Utility::last_activation = nullptr;
+                        logger::debug("Unblocked activation for {}", obj->GetName());
                     } else {
                         if (Utility::last_activation) {
                             obj->SetActivationBlocked(false);
                             Utility::last_activation = nullptr;
+                            logger::debug("Unblocked activation for {}", obj->GetName());
                         }
                         obj->SetActivationBlocked(true);
                         Utility::last_activation = obj;
+                        logger::debug("Blocked activation for {}", obj->GetName());
                     }
                 }
             }
         } else if (player->Is3DLoaded() && player->IsSneaking() && Utility::last_activation) {
             Utility::last_activation->SetActivationBlocked(false);
+            logger::debug("Unblocked activation for {} while sneaking", Utility::last_activation->GetName());
             Utility::last_activation = nullptr;
         }
+
+        if (Utility::immersive_interactions_global->value == 0.0f)
+            Utility::immersive_interactions_global->value = 1.0f;
 
         return RE::BSEventNotifyControl::kContinue;
     }
@@ -69,34 +74,45 @@ namespace Events {
     }
 
     RE::BSEventNotifyControl InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource) {
-        if (!a_event) return RE::BSEventNotifyControl::kContinue;
-
-        if (!Utility::immersive_interactions_present) return RE::BSEventNotifyControl::kContinue;
-
-        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson()) 
+        if (!a_event)
             return RE::BSEventNotifyControl::kContinue;
 
+        if (!Utility::immersive_interactions_present)
+            return RE::BSEventNotifyControl::kContinue;
+
+        if (const auto camera = RE::PlayerCamera::GetSingleton()) {
+            if (camera->IsInFirstPerson()) {
+                if (Utility::immersive_interactions_global->value == 0.0f)
+                    Utility::immersive_interactions_global->value = 1.0f;
+
+                return RE::BSEventNotifyControl::kContinue;
+            }
+        }
+
         if (const auto player = RE::PlayerCharacter::GetSingleton()) {
-            for (auto e = *a_event; e != nullptr; e = e->next) {
-                if (const auto button_event = e->AsButtonEvent()) {
-                    const auto control_map = RE::ControlMap::GetSingleton();
-                    const auto activate_key = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kKeyboard);
-                    const auto activate_key_controller = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kGamepad);
-                    if (button_event->GetIDCode() == activate_key || button_event->GetIDCode() == activate_key_controller) {
-                        if (button_event->IsPressed()) {
-                            if (Utility::crosshair_ref) {
-                                if (Utility::crosshair_ref->IsCrimeToActivate() && !player->IsSneaking()) {
-                                    if (Utility::last_activation == Utility::crosshair_ref) {
-                                        Utility::immersive_interactions_global->value = 1.0f;
-                                    } else {
-                                        Utility::immersive_interactions_global->value = 0.0f;
+            if (!player->IsSneaking()) {
+                for (auto e = *a_event; e != nullptr; e = e->next) {
+                    if (const auto button_event = e->AsButtonEvent()) {
+                        const auto control_map = RE::ControlMap::GetSingleton();
+                        const auto activate_key = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kKeyboard);
+                        const auto activate_key_controller = control_map->GetMappedKey("Activate"sv, RE::INPUT_DEVICE::kGamepad);
+                        if (button_event->GetIDCode() == activate_key || button_event->GetIDCode() == activate_key_controller) {
+                            if (button_event->IsPressed()) {
+                                if (Utility::crosshair_ref) {
+                                    if (Utility::crosshair_ref->IsCrimeToActivate()) {
+                                        if (Utility::last_activation == Utility::crosshair_ref)
+                                            Utility::immersive_interactions_global->value = 1.0f;
+                                        else
+                                            Utility::immersive_interactions_global->value = 0.0f;
                                     }
-                                }
+                                } else if (Utility::immersive_interactions_global->value == 0.0f)
+                                    Utility::immersive_interactions_global->value = 1.0f;
                             }
                         }
                     }
                 }
-            }
+            } else if (Utility::immersive_interactions_global->value == 0.0f)
+                Utility::immersive_interactions_global->value = 1.0f;
         }
 
         return RE::BSEventNotifyControl::kContinue;
@@ -115,12 +131,20 @@ namespace Events {
 
     RE::BSEventNotifyControl CrosshairEventHandler::ProcessEvent(const SKSE::CrosshairRefEvent* a_event,
                                                                  RE::BSTEventSource<SKSE::CrosshairRefEvent>* a_eventSource) {
-        if (!a_event) return RE::BSEventNotifyControl::kContinue;
-
-        if (!Utility::immersive_interactions_present) return RE::BSEventNotifyControl::kContinue;
-
-        if (const auto camera = RE::PlayerCamera::GetSingleton(); camera->IsInFirstPerson()) 
+        if (!a_event)
             return RE::BSEventNotifyControl::kContinue;
+
+        if (!Utility::immersive_interactions_present)
+            return RE::BSEventNotifyControl::kContinue;
+
+        if (const auto camera = RE::PlayerCamera::GetSingleton()) {
+            if (camera->IsInFirstPerson()) {
+                if (Utility::immersive_interactions_global->value == 0.0f)
+                    Utility::immersive_interactions_global->value = 1.0f;
+
+                return RE::BSEventNotifyControl::kContinue;
+            }
+        }
 
         if (const auto& ref = a_event->crosshairRef)
             Utility::crosshair_ref = ref;
@@ -131,9 +155,8 @@ namespace Events {
     }
 
     void CrosshairEventHandler::Register() {
-        if (const auto source = SKSE::GetCrosshairRefEventSource()) {
-            source->AddEventSink(GetSingleton());
-            logger::info("Registered crosshair event handler");
-        }
+        const auto source = SKSE::GetCrosshairRefEventSource();
+        source->AddEventSink(GetSingleton());
+        logger::info("Registered crosshair event handler");
     }
 }
