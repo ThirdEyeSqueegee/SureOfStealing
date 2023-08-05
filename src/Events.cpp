@@ -26,8 +26,7 @@ namespace Events {
 
                 if ((obj->IsCrimeToActivate() && obj->GetFormType() != RE::FormType::Container)
                     || (Settings::chairs_and_benches && (!"Chair"sv.compare(obj->GetName()) || !"Bench"sv.compare(obj->GetName())))
-                    || (Settings::empty_containers && obj->GetFormType() == RE::FormType::Container && !obj->GetInventoryCount()
-                        && !std::string_view(obj->GetName()).contains("Merchant"sv))) {
+                    || (Settings::empty_containers && obj->GetFormType() == RE::FormType::Container && !obj->GetInventoryCount())) {
                     logger::debug("Passed check");
                     // Skip unread books
                     if (obj->GetBaseObject()->IsBook()) {
@@ -56,8 +55,10 @@ namespace Events {
             Utility::last_activation = nullptr;
         }
 
-        if (Utility::immersive_interactions_global->value == 0.0f)
-            Utility::immersive_interactions_global->value = 1.0f;
+        if (Utility::immersive_interactions_present) {
+            if (Utility::immersive_interactions_global->value == 0.0f)
+                Utility::immersive_interactions_global->value = 1.0f;
+        }
 
         return RE::BSEventNotifyControl::kContinue;
     }
