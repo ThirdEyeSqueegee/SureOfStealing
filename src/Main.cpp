@@ -1,4 +1,4 @@
-#include "Events.h"
+#include "Hooks.h"
 #include "Logging.h"
 #include "SKSE/Interfaces.h"
 #include "Settings.h"
@@ -8,9 +8,7 @@ void Listener(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
         Settings::LoadSettings();
         Utility::InitGlobal();
-        Events::CrosshairEventHandler::Register();
-        Events::InputEventHandler::Register();
-        Events::OnActivateEventHandler::Register();
+        Hooks::Install();
     }
 }
 

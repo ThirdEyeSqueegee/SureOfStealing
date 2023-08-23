@@ -6,11 +6,19 @@ message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 ########################################################################################################################
 project(
         SureOfStealing
-        VERSION 1.0.15
+        VERSION 1.1.0
         LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+
+message("\nCMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+message("CMAKE_SHARED_LINKER_FLAGS: ${CMAKE_SHARED_LINKER_FLAGS}")
+
+message("\nCMAKE_CXX_FLAGS_RELWITHDEBINFO: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+message("CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO: ${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO}")
+
+message("\nCMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+message("CMAKE_SHARED_LINKER_FLAGS_DEBUG: ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
 
 include(GNUInstallDirs)
 
@@ -19,12 +27,6 @@ configure_file(
         ${CMAKE_CURRENT_BINARY_DIR}/version.rc
         @ONLY)
 
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /Ob3 /DNDEBUG")
-set(CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "/DEBUG /OPT:REF /OPT:ICF")
-
-message("CMAKE_CXX_FLAGS_RELWITHDEBINFO: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-message("CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO: ${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO}")
-
 set(PUBLIC_HEADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 set(headers
         include/Utility.h)
@@ -32,8 +34,8 @@ set(headers
 set(sources
         src/Logging.cpp
         src/Main.cpp
-        src/Events.cpp
         src/Settings.cpp
+        src/Hooks.cpp
 
         ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 
@@ -46,16 +48,20 @@ source_group(
 ########################################################################################################################
 ## Configure target DLL
 ########################################################################################################################
-find_package(CommonLibSSE REQUIRED)
+find_package(CommonLibSSE CONFIG REQUIRED)
 
-add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${headers} ${sources})
+add_commonlibsse_plugin(${PROJECT_NAME} AUTHOR ThirdEyeSqueegee SOURCES ${headers} ${sources})
+
 add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS "${PROJECT_NAME}")
+
+find_path(SIMPLEINI_INCLUDE_DIRS "SimpleIni.h")
 
 target_include_directories(${PROJECT_NAME}
         PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
-        $<INSTALL_INTERFACE:src>)
+        $<INSTALL_INTERFACE:src>
+        ${SIMPLEINI_INCLUDE_DIRS})
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -63,7 +69,8 @@ target_include_directories(${PROJECT_NAME}
 
 target_precompile_headers(${PROJECT_NAME}
         PRIVATE
-        include/PCH.h)
+        include/PCH.h
+        ${SIMPLEINI_INCLUDE_DIRS}/SimpleIni.h)
 
 install(DIRECTORY "${PUBLIC_HEADER_DIR}"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
@@ -74,8 +81,11 @@ install(TARGETS ${PROJECT_NAME}
 ########################################################################################################################
 ## Automatic plugin deployment
 ########################################################################################################################
-# Automatic deployment to FOMOD directory.
-set(BUILD_NAME "Release")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(BUILD_NAME "Debug")
+else()
+    set(BUILD_NAME "Release")
+endif()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Plugin${BUILD_NAME}/skse/plugins")
