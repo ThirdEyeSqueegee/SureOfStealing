@@ -5,6 +5,9 @@
 
 namespace Hooks {
     void Install() {
+        if (REL::Module::IsVR())
+            PickupObject::GetSingleton()->idx = 206; // 0xce
+
         stl::write_vfunc<RE::PlayerCharacter, PickupObject>();
         logger::info("Installed PlayerCharacter::PickUpObject hook");
 
@@ -14,7 +17,7 @@ namespace Hooks {
 
     void PickupObject::Thunk(RE::PlayerCharacter* a_this, RE::TESObjectREFR* a_object, uint32_t a_count, bool a_arg3, bool a_playSound) {
         if (a_this->Is3DLoaded() && !a_this->IsSneaking()) {
-            const auto name = a_object->GetName();
+            const auto name    = a_object->GetName();
             const auto form_id = a_object->GetFormID();
             if ((a_object->IsCrimeToActivate() && a_object->GetFormType() != RE::FormType::Container)
                 || (Settings::chairs_and_benches && !("Chair"sv.compare(name) && "Bench"sv.compare(name)))
@@ -64,7 +67,7 @@ namespace Hooks {
 
         if (const auto player = RE::PlayerCharacter::GetSingleton(); a_activatorRef->IsPlayerRef()) {
             if (player->Is3DLoaded() && !player->IsSneaking()) {
-                const auto name = a_targetRef->GetName();
+                const auto name    = a_targetRef->GetName();
                 const auto form_id = a_targetRef->GetFormID();
                 if (a_targetRef->IsCrimeToActivate()) {
                     if (Utility::last_activation) {

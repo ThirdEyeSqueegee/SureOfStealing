@@ -7,5 +7,5 @@ public:
     inline static bool debug_logging = false;
 
     inline static bool chairs_and_benches = true;
-    inline static bool empty_containers = true;
+    inline static bool empty_containers   = true;
 };

@@ -2,10 +2,9 @@
 
 class Utility : public Singleton<Utility> {
 public:
-    inline static RE::TESObjectREFR* crosshair_ref = nullptr;
-    inline static RE::TESObjectREFR* last_activation = nullptr;
-    inline static RE::TESGlobal* immersive_interactions_global = nullptr;
-    inline static bool immersive_interactions_present = false;
+    inline static RE::TESObjectREFR* last_activation                = nullptr;
+    inline static RE::TESGlobal*     immersive_interactions_global  = nullptr;
+    inline static bool               immersive_interactions_present = false;
 
     static void InitGlobal() {
         if (const auto handler = RE::TESDataHandler::GetSingleton(); handler->LookupModByName("ImmersiveInteractions.esp"sv)) {

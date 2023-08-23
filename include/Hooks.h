@@ -8,8 +8,8 @@ namespace Hooks {
         static void Thunk(RE::PlayerCharacter* a_this, RE::TESObjectREFR* a_object, uint32_t a_count, bool a_arg3, bool a_playSound);
 
         inline static REL::Relocation<decltype(&Thunk)> func;
-
-        inline static constexpr std::size_t idx = (0xb2d0 - 0xac70) / 0x8;
+        
+        inline static std::size_t idx = 204; // 0xcc
     };
 
     class Activate : public Singleton<Activate> {
@@ -19,6 +19,6 @@ namespace Hooks {
 
         inline static REL::Relocation<decltype(&Thunk)> func;
 
-        inline static constexpr std::size_t idx = (0xf20 - 0xd68) / 0x8;
+        inline static constexpr std::size_t idx = 55; // 0x37
     };
 }

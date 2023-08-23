@@ -16,7 +16,7 @@ void Settings::LoadSettings() {
     }
 
     chairs_and_benches = ini.GetBoolValue("General", "bChairsAndBenches");
-    empty_containers = ini.GetBoolValue("General", "bEmptyContainers");
+    empty_containers   = ini.GetBoolValue("General", "bEmptyContainers");
 
     logger::info("Loaded settings");
     logger::info("\tbChairsAndBenches = {}", chairs_and_benches);
