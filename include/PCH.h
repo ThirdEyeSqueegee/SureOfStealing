@@ -204,7 +204,7 @@ namespace stl {
     void write_thunk_call() {
         SKSE::AllocTrampoline(14);
         auto& trampoline = SKSE::GetTrampoline();
-        T::func = trampoline.write_call<5>(T::target.address(), T::Thunk);
+        T::func = trampoline.write_call<5>(T::address, T::Thunk);
     }
 
     template <class S, class T>

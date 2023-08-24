@@ -11,8 +11,18 @@ namespace Hooks {
         stl::write_vfunc<RE::PlayerCharacter, PickupObject>();
         logger::info("Installed PlayerCharacter::PickUpObject hook");
 
-        stl::write_vfunc<RE::TESFlora, Activate>();
+        stl::write_vfunc<RE::TESFlora, ActivateFlora>();
         logger::info("Installed TESFlora::Activate hook");
+
+        if (Settings::chairs_and_benches) {
+            stl::write_vfunc<RE::TESFurniture, ActivateFurniture>();
+            logger::info("Installed TESFurniture::Activate hook");
+        }
+
+        if (Settings::empty_containers) {
+            stl::write_vfunc<RE::TESObjectCONT, ActivateContainer>();
+            logger::info("Installed TESObjectCONT::Activate hook");
+        }
     }
 
     void PickupObject::Thunk(RE::PlayerCharacter* a_this, RE::TESObjectREFR* a_object, uint32_t a_count, bool a_arg3, bool a_playSound) {
@@ -60,18 +70,19 @@ namespace Hooks {
         return func(a_this, a_object, a_count, a_arg3, a_playSound);
     }
 
-    bool Activate::Thunk(RE::TESFlora* a_this, RE::TESObjectREFR* a_targetRef, RE::TESObjectREFR* a_activatorRef, std::uint8_t a_arg3,
-                         RE::TESBoundObject* a_object, std::int32_t a_targetCount) {
-        if ("Coin Purse"sv.compare(a_targetRef->GetName()))
+    bool ActivateFlora::Thunk(RE::TESFlora* a_this, RE::TESObjectREFR* a_targetRef, RE::TESObjectREFR* a_activatorRef, std::uint8_t a_arg3,
+                              RE::TESBoundObject* a_object, std::int32_t a_targetCount) {
+        const auto name = a_targetRef->GetName();
+
+        if ("Coin Purse"sv.compare(name))
             return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
 
         if (const auto player = RE::PlayerCharacter::GetSingleton(); a_activatorRef->IsPlayerRef()) {
             if (player->Is3DLoaded() && !player->IsSneaking()) {
-                const auto name    = a_targetRef->GetName();
                 const auto form_id = a_targetRef->GetFormID();
                 if (a_targetRef->IsCrimeToActivate()) {
                     if (Utility::last_activation) {
-                        if (a_targetRef->GetFormID() == Utility::last_activation->GetFormID()) {
+                        if (form_id == Utility::last_activation->GetFormID()) {
                             logger::debug("Allowing steal for {} (0x{:x})", name, form_id);
                             if (Utility::immersive_interactions_present)
                                 Utility::immersive_interactions_global->value = 0.0f;
@@ -86,6 +97,91 @@ namespace Hooks {
                         Utility::immersive_interactions_global->value = 1.0f;
 
                     return func(a_this, nullptr, a_activatorRef, a_arg3, a_object, 0);
+                }
+            } else if (player->Is3DLoaded() && player->IsSneaking() && Utility::last_activation) {
+                Utility::last_activation = nullptr;
+                if (Utility::immersive_interactions_present)
+                    Utility::immersive_interactions_global->value = 1.0f;
+
+                return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+            }
+
+            if (Utility::immersive_interactions_present) {
+                if (Utility::immersive_interactions_global->value == 0.0f)
+                    Utility::immersive_interactions_global->value = 1.0f;
+            }
+        }
+
+        return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+    }
+
+    bool ActivateFurniture::Thunk(RE::TESFurniture* a_this, RE::TESObjectREFR* a_targetRef, RE::TESObjectREFR* a_activatorRef, std::uint8_t a_arg3,
+                                  RE::TESBoundObject* a_object, std::int32_t a_targetCount) {
+        const auto name = a_targetRef->GetName();
+
+        if ("Bench"sv.compare(name) && "Chair"sv.compare(name))
+            return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+
+        if (const auto player = RE::PlayerCharacter::GetSingleton(); a_activatorRef->IsPlayerRef()) {
+            if (player->Is3DLoaded() && !player->IsSneaking()) {
+                const auto form_id = a_targetRef->GetFormID();
+                if (Utility::last_activation) {
+                    if (form_id == Utility::last_activation->GetFormID()) {
+                        logger::debug("Allowing player to sit on {} (0x{:x})", name, form_id);
+                        if (Utility::immersive_interactions_present)
+                            Utility::immersive_interactions_global->value = 0.0f;
+                        Utility::last_activation = nullptr;
+
+                        return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+                    }
+                }
+                logger::debug("Blocking player from sitting on {} (0x{:x})", name, form_id);
+                Utility::last_activation = a_targetRef;
+                if (Utility::immersive_interactions_present)
+                    Utility::immersive_interactions_global->value = 1.0f;
+
+                return false;
+            }
+            if (player->Is3DLoaded() && player->IsSneaking() && Utility::last_activation) {
+                Utility::last_activation = nullptr;
+                if (Utility::immersive_interactions_present)
+                    Utility::immersive_interactions_global->value = 1.0f;
+
+                return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+            }
+
+            if (Utility::immersive_interactions_present) {
+                if (Utility::immersive_interactions_global->value == 0.0f)
+                    Utility::immersive_interactions_global->value = 1.0f;
+            }
+        }
+
+        return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+    }
+
+    bool ActivateContainer::Thunk(RE::TESObjectCONT* a_this, RE::TESObjectREFR* a_targetRef, RE::TESObjectREFR* a_activatorRef, std::uint8_t a_arg3,
+                                  RE::TESBoundObject* a_object, std::int32_t a_targetCount) {
+        if (const auto player = RE::PlayerCharacter::GetSingleton(); a_activatorRef->IsPlayerRef()) {
+            if (player->Is3DLoaded() && !player->IsSneaking()) {
+                const auto name    = a_targetRef->GetName();
+                const auto form_id = a_targetRef->GetFormID();
+                if (a_targetRef->IsCrimeToActivate()) {
+                    if (Utility::last_activation) {
+                        if (a_targetRef->GetFormID() == Utility::last_activation->GetFormID()) {
+                            logger::debug("Allowing player to activate {} (0x{:x})", name, form_id);
+                            if (Utility::immersive_interactions_present)
+                                Utility::immersive_interactions_global->value = 0.0f;
+                            Utility::last_activation = nullptr;
+
+                            return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+                        }
+                    }
+                    logger::debug("Blocking player from activating {} (0x{:x})", name, form_id);
+                    Utility::last_activation = a_targetRef;
+                    if (Utility::immersive_interactions_present)
+                        Utility::immersive_interactions_global->value = 1.0f;
+
+                    return false;
                 }
             } else if (player->Is3DLoaded() && player->IsSneaking() && Utility::last_activation) {
                 Utility::last_activation = nullptr;
