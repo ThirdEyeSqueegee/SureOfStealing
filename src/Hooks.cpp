@@ -6,7 +6,7 @@
 namespace Hooks {
     void Install() {
         if (REL::Module::IsVR())
-            PickupObject::GetSingleton()->idx = 206; // 0xce
+            PickupObject::idx = 206; // 0xce
 
         stl::write_vfunc<RE::PlayerCharacter, PickupObject>();
         logger::info("Installed PlayerCharacter::PickUpObject hook");
@@ -19,19 +19,15 @@ namespace Hooks {
             logger::info("Installed TESFurniture::Activate hook");
         }
 
-        if (Settings::empty_containers) {
-            stl::write_vfunc<RE::TESObjectCONT, ActivateContainer>();
-            logger::info("Installed TESObjectCONT::Activate hook");
-        }
+        stl::write_vfunc<RE::TESObjectCONT, ActivateContainer>();
+        logger::info("Installed TESObjectCONT::Activate hook");
     }
 
     void PickupObject::Thunk(RE::PlayerCharacter* a_this, RE::TESObjectREFR* a_object, uint32_t a_count, bool a_arg3, bool a_playSound) {
         if (a_this->Is3DLoaded() && !a_this->IsSneaking()) {
             const auto name    = a_object->GetName();
             const auto form_id = a_object->GetFormID();
-            if ((a_object->IsCrimeToActivate() && a_object->GetFormType() != RE::FormType::Container)
-                || (Settings::chairs_and_benches && !("Chair"sv.compare(name) && "Bench"sv.compare(name)))
-                || (Settings::empty_containers && a_object->GetFormType() == RE::FormType::Container && !a_object->GetInventoryCount(true))) {
+            if (a_object->IsCrimeToActivate()) {
                 // Skip unread books
                 if (a_object->GetBaseObject()->IsBook()) {
                     if (const auto book = a_object->GetBaseObject()->As<RE::TESObjectBOOK>(); !book->IsRead())
@@ -167,7 +163,7 @@ namespace Hooks {
                 const auto form_id = a_targetRef->GetFormID();
                 if (a_targetRef->IsCrimeToActivate()) {
                     if (Utility::last_activation) {
-                        if (a_targetRef->GetFormID() == Utility::last_activation->GetFormID()) {
+                        if (form_id == Utility::last_activation->GetFormID()) {
                             logger::debug("Allowing player to activate {} (0x{:x})", name, form_id);
                             if (Utility::immersive_interactions_present)
                                 Utility::immersive_interactions_global->value = 0.0f;
@@ -176,6 +172,12 @@ namespace Hooks {
                             return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
                         }
                     }
+                    RE::BSString activate_text;
+                    a_this->GetActivateText(a_targetRef, activate_text);
+
+                    if (std::string_view(activate_text.c_str()).contains("Empty"))
+                        return func(a_this, a_targetRef, a_activatorRef, a_arg3, a_object, a_targetCount);
+
                     logger::debug("Blocking player from activating {} (0x{:x})", name, form_id);
                     Utility::last_activation = a_targetRef;
                     if (Utility::immersive_interactions_present)
