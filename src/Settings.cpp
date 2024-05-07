@@ -1,6 +1,7 @@
 #include "Settings.h"
 
-void Settings::LoadSettings() {
+void Settings::LoadSettings() noexcept
+{
     logger::info("Loading settings");
 
     CSimpleIniA ini;
@@ -11,7 +12,7 @@ void Settings::LoadSettings() {
     debug_logging = ini.GetBoolValue("Log", "Debug");
 
     if (debug_logging) {
-        spdlog::get("Global")->set_level(spdlog::level::level_enum::debug);
+        spdlog::set_level(spdlog::level::debug);
         logger::debug("Debug logging enabled");
     }
 
@@ -19,4 +20,5 @@ void Settings::LoadSettings() {
 
     logger::info("Loaded settings");
     logger::info("\tbChairsAndBenches = {}", chairs_and_benches);
+    logger::info("");
 }

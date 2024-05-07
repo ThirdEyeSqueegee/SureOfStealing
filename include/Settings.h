@@ -1,10 +1,11 @@
 #pragma once
 
-class Settings : public Singleton<Settings> {
+class Settings : public Singleton<Settings>
+{
 public:
-    static void LoadSettings();
+    static void LoadSettings() noexcept;
 
-    inline static bool debug_logging = false;
+    inline static bool debug_logging{};
 
-    inline static bool chairs_and_benches = true;
+    inline static bool chairs_and_benches{};
 };
